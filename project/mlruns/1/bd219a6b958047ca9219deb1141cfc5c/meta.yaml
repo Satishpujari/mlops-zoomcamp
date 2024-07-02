@@ -1,0 +1,9 @@
+# Example meta.yaml content
+artifact_location: /workspaces/mlops-zoomcamp/project/mlruns/1
+experiment_id: '1'
+start_time: '1719911850'
+end_time: '1719911850'
+run_uuid: '1ce0f26313fe42e1be8adca4ff1cc98b'
+user_id: '1'
+lifecycle_stage: 'active'
+name: 'nyc-taxi-experiment'
