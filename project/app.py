@@ -18,6 +18,16 @@ class InputData(BaseModel):
     Airline: str
     Source: str
     Destination: str
+    Total_Stops: int
+    Date: int
+    Month: int
+    Year: int
+    Dep_hours: int
+    Dep_min: int
+    Arrival_hours: int
+    Arrival_min: int
+    Duration_hours: int
+    Duration_min: int
 
 def get_latest_run_id(experiment_name):
     client = MlflowClient()
@@ -29,66 +39,72 @@ def get_latest_run_id(experiment_name):
         if runs:
             return runs[0].info.run_id
     return None
+def load_model_and_preprocessor():
+    experiment_name = 'nyc-taxi-experiment'
+    run_id = get_latest_run_id(experiment_name)
+    print("the run_id is ", run_id)
 
-experiment_name = 'nyc-taxi-experiment'
-run_id = get_latest_run_id(experiment_name)
-print("the run_id is ", run_id)
+    if run_id is None:
+        raise Exception(f"No runs found for experiment '{experiment_name}'")
 
-if run_id is None:
-    raise Exception(f"No runs found for experiment '{experiment_name}'")
+    # Load the model from MLflow using the latest run ID
+    logged_model = f'runs:/{run_id}/model'
+    preprocessor_uri = f"runs:/{run_id}/preprocessor"
+    model = mlflow.sklearn.load_model(logged_model)
+    preprocessor = mlflow.sklearn.load_model(preprocessor_uri)
 
-# Load the model from MLflow using the latest run ID
-logged_model = f'runs:/{run_id}/model'
-model = mlflow.sklearn.load_model(logged_model)
+    return model,preprocessor
 
-# Define the preprocessing pipeline
-categorical_features = ['Airline', 'Source', 'Destination']
-encoder = ColumnTransformer(
-    transformers=[
-        ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
-    ],
-    remainder='passthrough'
-)
-scaler = StandardScaler()
+model,preprocessor = load_model_and_preprocessor()
 
-preprocessor = Pipeline(steps=[
-    ('encoder', encoder),
-    ('scaler', scaler)
-])
+
+# # Define the preprocessing pipeline
+# categorical_features = ['Airline', 'Source', 'Destination']
+# encoder = ColumnTransformer(
+#     transformers=[
+#         ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
+#     ],
+#     remainder='passthrough'
+# )
+# scaler = StandardScaler()
+
+# preprocessor = Pipeline(steps=[
+#     ('encoder', encoder),
+#     ('scaler', scaler)
+# ])
 
 # Dummy DataFrame to fit the ColumnTransformer
 # Adjust this based on your actual data for fitting purposes
-dummy_data = pd.DataFrame({
-    'Airline': ['Dummy_Airline'],
-    'Source': ['Dummy_Source'],
-    'Destination': ['Dummy_Destination']
-})
+# dummy_data = pd.DataFrame({
+#     'Airline': ['Dummy_Airline'],
+#     'Source': ['Dummy_Source'],
+#     'Destination': ['Dummy_Destination']
+# })
 
-# Fit the preprocessor pipeline with dummy data
-try:
-    preprocessor.fit(dummy_data)
-except Exception as e:
-    raise Exception(f"Error in fitting preprocessing pipeline: {str(e)}")
+# # Fit the preprocessor pipeline with dummy data
+# try:
+#     preprocessor.fit(dummy_data)
+# except Exception as e:
+#     raise Exception(f"Error in fitting preprocessing pipeline: {str(e)}")
 
-@app.post('/predict')
-async def predict(input_data: InputData):
-    # Convert the input data to DataFrame
-    input_df = pd.DataFrame([input_data.dict()])
-
+@app.post("/predict/")
+def predict(data: InputData):
+    # Convert input data to DataFrame
+    input_df = pd.DataFrame([data.dict()])
+    
     # Preprocess the input data
     try:
         input_processed = preprocessor.transform(input_df)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f'Error in preprocessing: {str(e)}')
-
+        raise HTTPException(status_code=400, detail=f"Error in preprocessing: {str(e)}")
+    
     # Make a prediction
     try:
-        predicted_price = model.predict(input_processed)
+        prediction = model.predict(input_processed)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f'Error in prediction: {str(e)}')
-
-    # Return the predicted price as a JSON response
-    return {'predicted_price': predicted_price[0]}
+        raise HTTPException(status_code=400, detail=f"Error in prediction: {str(e)}")
+    
+    return {"predicted_price": prediction[0]}
 
 if __name__ == '__main__':
     import uvicorn
