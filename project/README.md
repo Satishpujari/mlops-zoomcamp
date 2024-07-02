@@ -1,3 +1,7 @@
+Introduction
+In this project, we aimed to predict flight prices using a Random Forest regression model. We employed various preprocessing techniques to ensure the data was clean and suitable for modeling.
+
+
 FastAPI 
 use the curlcommand to test the endpoint:
 curl --location 'http://127.0.0.1:5001/predict/' \
