@@ -1,0 +1,15 @@
+{
+  "id": "4717a4d6-45ce-43a4-88f0-d68f8a408dba",
+  "name": "flight price prediction project",
+  "description": null,
+  "dashboard": {
+    "name": "flight price prediction project",
+    "panels": [],
+    "tabs": [],
+    "tab_id_to_panel_ids": {}
+  },
+  "team_id": null,
+  "date_from": null,
+  "date_to": null,
+  "created_at": "2024-07-03T05:25:50.969807"
+}
